@@ -1394,14 +1394,17 @@ this.createjs = this.createjs || {};
 	 * Begin loading the content.
 	 * #method load
 	 * @param {String} src The path to the sound.
+	 * @param {String} [method=GET] The request method.
 	 */
-	p.load = function (src) {
+	p.load = function (src, method, values) {
 		if (src != null) {
 			this.src = src;
 		}
 
+		if (method == null) { method = "GET"; }
+
 		this.request = new XMLHttpRequest();
-		this.request.open("GET", this.src, true);
+		this.request.open(method, this.src, true);
 		this.request.responseType = "arraybuffer";
 		this.request.onload = createjs.proxy(this.handleLoad, this);
 		this.request.onError = createjs.proxy(this.handleError, this);
