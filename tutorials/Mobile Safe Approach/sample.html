@@ -7,7 +7,7 @@
 	<body onload="init()">
 		<h1 id="status">Hello World.</h1>
 
-		<script src="http://code.createjs.com/soundjs-0.5.2.min.js"></script>
+		<script src="https://code.createjs.com/soundjs-0.6.2.min.js"></script>
 
 		<script>
 			var display;
@@ -38,9 +38,9 @@
 
 						if (!createjs.Sound.initializeDefaultPlugins()) {return;}
 
-						var audioPath = "../_assets_soundjs/";
-						var manifest = [
-							{id:"Music", src:"18-machinae_supremacy-lord_krutors_dominion.ogg"},
+						var audioPath = "../../_assets/audio/";
+						var sounds = [
+							{id:"Music", src:"M-GameBG.ogg"},
 							{id:"Thunder", src:"Thunder1.ogg"}
 						];
 
@@ -48,7 +48,7 @@
 						createjs.Sound.alternateExtensions = ["mp3"];
 						var loadProxy = createjs.proxy(this.handleLoad, this);
 						createjs.Sound.addEventListener("fileload", loadProxy);
-						createjs.Sound.registerManifest(manifest, audioPath);
+						createjs.Sound.registerSounds(sounds, audioPath);
 					},
 
 					handleLoad: function(event) {

@@ -36,62 +36,83 @@ this.createjs = this.createjs||{};
 (function() {
 	"use strict";
 
-/**
- * EventDispatcher provides methods for managing queues of event listeners and dispatching events.
- *
- * You can either extend EventDispatcher or mix its methods into an existing prototype or instance by using the
- * EventDispatcher {{#crossLink "EventDispatcher/initialize"}}{{/crossLink}} method.
- * 
- * Together with the CreateJS Event class, EventDispatcher provides an extended event model that is based on the
- * DOM Level 2 event model, including addEventListener, removeEventListener, and dispatchEvent. It supports
- * bubbling / capture, preventDefault, stopPropagation, stopImmediatePropagation, and handleEvent.
- * 
- * EventDispatcher also exposes a {{#crossLink "EventDispatcher/on"}}{{/crossLink}} method, which makes it easier
- * to create scoped listeners, listeners that only run once, and listeners with associated arbitrary data. The 
- * {{#crossLink "EventDispatcher/off"}}{{/crossLink}} method is merely an alias to
- * {{#crossLink "EventDispatcher/removeEventListener"}}{{/crossLink}}.
- * 
- * Another addition to the DOM Level 2 model is the {{#crossLink "EventDispatcher/removeAllEventListeners"}}{{/crossLink}}
- * method, which can be used to listeners for all events, or listeners for a specific event. The Event object also 
- * includes a {{#crossLink "Event/remove"}}{{/crossLink}} method which removes the active listener.
- *
- * <h4>Example</h4>
- * Add EventDispatcher capabilities to the "MyClass" class.
- *
- *      EventDispatcher.initialize(MyClass.prototype);
- *
- * Add an event (see {{#crossLink "EventDispatcher/addEventListener"}}{{/crossLink}}).
- *
- *      instance.addEventListener("eventName", handlerMethod);
- *      function handlerMethod(event) {
- *          console.log(event.target + " Was Clicked");
- *      }
- *
- * <b>Maintaining proper scope</b><br />
- * Scope (ie. "this") can be be a challenge with events. Using the {{#crossLink "EventDispatcher/on"}}{{/crossLink}}
- * method to subscribe to events simplifies this.
- *
- *      instance.addEventListener("click", function(event) {
- *          console.log(instance == this); // false, scope is ambiguous.
- *      });
- *      
- *      instance.on("click", function(event) {
- *          console.log(instance == this); // true, "on" uses dispatcher scope by default.
- *      });
- * 
- * If you want to use addEventListener instead, you may want to use function.bind() or a similar proxy to manage scope.
- *      
- *
- * @class EventDispatcher
- * @constructor
- **/
-var EventDispatcher = function() {
-/*	this.initialize(); */ // not needed.
-};
-var p = EventDispatcher.prototype;
-EventDispatcher.prototype.constructor = EventDispatcher;
 
+// constructor:
+	/**
+	 * EventDispatcher provides methods for managing queues of event listeners and dispatching events.
+	 *
+	 * You can either extend EventDispatcher or mix its methods into an existing prototype or instance by using the
+	 * EventDispatcher {{#crossLink "EventDispatcher/initialize"}}{{/crossLink}} method.
+	 * 
+	 * Together with the CreateJS Event class, EventDispatcher provides an extended event model that is based on the
+	 * DOM Level 2 event model, including addEventListener, removeEventListener, and dispatchEvent. It supports
+	 * bubbling / capture, preventDefault, stopPropagation, stopImmediatePropagation, and handleEvent.
+	 * 
+	 * EventDispatcher also exposes a {{#crossLink "EventDispatcher/on"}}{{/crossLink}} method, which makes it easier
+	 * to create scoped listeners, listeners that only run once, and listeners with associated arbitrary data. The 
+	 * {{#crossLink "EventDispatcher/off"}}{{/crossLink}} method is merely an alias to
+	 * {{#crossLink "EventDispatcher/removeEventListener"}}{{/crossLink}}.
+	 * 
+	 * Another addition to the DOM Level 2 model is the {{#crossLink "EventDispatcher/removeAllEventListeners"}}{{/crossLink}}
+	 * method, which can be used to listeners for all events, or listeners for a specific event. The Event object also 
+	 * includes a {{#crossLink "Event/remove"}}{{/crossLink}} method which removes the active listener.
+	 *
+	 * <h4>Example</h4>
+	 * Add EventDispatcher capabilities to the "MyClass" class.
+	 *
+	 *      EventDispatcher.initialize(MyClass.prototype);
+	 *
+	 * Add an event (see {{#crossLink "EventDispatcher/addEventListener"}}{{/crossLink}}).
+	 *
+	 *      instance.addEventListener("eventName", handlerMethod);
+	 *      function handlerMethod(event) {
+	 *          console.log(event.target + " Was Clicked");
+	 *      }
+	 *
+	 * <b>Maintaining proper scope</b><br />
+	 * Scope (ie. "this") can be be a challenge with events. Using the {{#crossLink "EventDispatcher/on"}}{{/crossLink}}
+	 * method to subscribe to events simplifies this.
+	 *
+	 *      instance.addEventListener("click", function(event) {
+	 *          console.log(instance == this); // false, scope is ambiguous.
+	 *      });
+	 *      
+	 *      instance.on("click", function(event) {
+	 *          console.log(instance == this); // true, "on" uses dispatcher scope by default.
+	 *      });
+	 * 
+	 * If you want to use addEventListener instead, you may want to use function.bind() or a similar proxy to manage
+	 * scope.
+	 *
+	 * <b>Browser support</b>
+	 * The event model in CreateJS can be used separately from the suite in any project, however the inheritance model
+	 * requires modern browsers (IE9+).
+	 *      
+	 *
+	 * @class EventDispatcher
+	 * @constructor
+	 **/
+	function EventDispatcher() {
+	
+	
+	// private properties:
+		/**
+		 * @protected
+		 * @property _listeners
+		 * @type Object
+		 **/
+		this._listeners = null;
+		
+		/**
+		 * @protected
+		 * @property _captureListeners
+		 * @type Object
+		 **/
+		this._captureListeners = null;
+	}
+	var p = EventDispatcher.prototype;
 
+// static public methods:
 	/**
 	 * Static initializer to mix EventDispatcher methods into a target object or prototype.
 	 * 
@@ -114,30 +135,6 @@ EventDispatcher.prototype.constructor = EventDispatcher;
 		target.willTrigger = p.willTrigger;
 	};
 	
-// constructor:
-
-// private properties:
-	/**
-	 * @protected
-	 * @property _listeners
-	 * @type Object
-	 **/
-	p._listeners = null;
-
-	/**
-	 * @protected
-	 * @property _captureListeners
-	 * @type Object
-	 **/
-	p._captureListeners = null;
-
-// constructor:
-	/**
-	 * Initialization method.
-	 * @method initialize
-	 * @protected
-	 **/
-	p.initialize = function() {};
 
 // public methods:
 	/**
@@ -178,7 +175,11 @@ EventDispatcher.prototype.constructor = EventDispatcher;
 	 * only run once, associate arbitrary data with the listener, and remove the listener.
 	 * 
 	 * This method works by creating an anonymous wrapper function and subscribing it with addEventListener.
-	 * The created anonymous function is returned for use with .removeEventListener (or .off).
+	 * The wrapper function is returned for use with `removeEventListener` (or `off`).
+	 * 
+	 * <b>IMPORTANT:</b> To remove a listener added with `on`, you must pass in the returned wrapper function as the listener, or use
+	 * {{#crossLink "Event/remove"}}{{/crossLink}}. Likewise, each time you call `on` a NEW wrapper function is subscribed, so multiple calls
+	 * to `on` with the same params will create multiple listeners.
 	 * 
 	 * <h4>Example</h4>
 	 * 
@@ -248,6 +249,9 @@ EventDispatcher.prototype.constructor = EventDispatcher;
 	/**
 	 * A shortcut to the removeEventListener method, with the same parameters and return value. This is a companion to the
 	 * .on method.
+	 * 
+	 * <b>IMPORTANT:</b> To remove a listener added with `on`, you must pass in the returned wrapper function as the listener. See 
+	 * {{#crossLink "EventDispatcher/on"}}{{/crossLink}} for an example.
 	 *
 	 * @method off
 	 * @param {String} type The string type of the event.
@@ -293,19 +297,24 @@ EventDispatcher.prototype.constructor = EventDispatcher;
 	 * @method dispatchEvent
 	 * @param {Object | String | Event} eventObj An object with a "type" property, or a string type.
 	 * While a generic object will work, it is recommended to use a CreateJS Event instance. If a string is used,
-	 * dispatchEvent will construct an Event instance with the specified type.
-	 * @return {Boolean} Returns the value of eventObj.defaultPrevented.
+	 * dispatchEvent will construct an Event instance if necessary with the specified type. This latter approach can
+	 * be used to avoid event object instantiation for non-bubbling events that may not have any listeners.
+	 * @param {Boolean} [bubbles] Specifies the `bubbles` value when a string was passed to eventObj.
+	 * @param {Boolean} [cancelable] Specifies the `cancelable` value when a string was passed to eventObj.
+	 * @return {Boolean} Returns false if `preventDefault()` was called on a cancelable event, true otherwise.
 	 **/
-	p.dispatchEvent = function(eventObj) {
+	p.dispatchEvent = function(eventObj, bubbles, cancelable) {
 		if (typeof eventObj == "string") {
-			// won't bubble, so skip everything if there's no listeners:
+			// skip everything if there's no listeners and it doesn't bubble:
 			var listeners = this._listeners;
-			if (!listeners || !listeners[eventObj]) { return false; }
-			eventObj = new createjs.Event(eventObj);
+			if (!bubbles && (!listeners || !listeners[eventObj])) { return true; }
+			eventObj = new createjs.Event(eventObj, bubbles, cancelable);
 		} else if (eventObj.target && eventObj.clone) {
 			// redispatching an active event object, so clone it:
 			eventObj = eventObj.clone();
 		}
+		
+		// TODO: it would be nice to eliminate this. Maybe in favour of evtObj instanceof Event? Or !!evtObj.createEvent
 		try { eventObj.target = this; } catch (e) {} // try/catch allows redispatching of native events
 
 		if (!eventObj.bubbles || !this.parent) {
@@ -324,7 +333,7 @@ EventDispatcher.prototype.constructor = EventDispatcher;
 				list[i]._dispatchEvent(eventObj, 3);
 			}
 		}
-		return eventObj.defaultPrevented;
+		return !eventObj.defaultPrevented;
 	};
 
 	/**
@@ -366,21 +375,21 @@ EventDispatcher.prototype.constructor = EventDispatcher;
 		return "[EventDispatcher]";
 	};
 
+
 // private methods:
 	/**
 	 * @method _dispatchEvent
-	 * @param {Object | String | Event} eventObj
+	 * @param {Object | Event} eventObj
 	 * @param {Object} eventPhase
 	 * @protected
 	 **/
 	p._dispatchEvent = function(eventObj, eventPhase) {
-		var l, listeners = (eventPhase==1) ? this._captureListeners : this._listeners;
-		if (eventObj && listeners) {
-			var arr = listeners[eventObj.type];
-			if (!arr||!(l=arr.length)) { return; }
+		var l, arr, listeners = (eventPhase <= 2) ? this._captureListeners : this._listeners;
+		if (eventObj && listeners && (arr = listeners[eventObj.type]) && (l=arr.length)) {
 			try { eventObj.currentTarget = this; } catch (e) {}
-			try { eventObj.eventPhase = eventPhase; } catch (e) {}
+			try { eventObj.eventPhase = eventPhase|0; } catch (e) {}
 			eventObj.removed = false;
+			
 			arr = arr.slice(); // to avoid issues with items being removed or added during the dispatch
 			for (var i=0; i<l && !eventObj.immediatePropagationStopped; i++) {
 				var o = arr[i];
@@ -392,8 +401,9 @@ EventDispatcher.prototype.constructor = EventDispatcher;
 				}
 			}
 		}
+		if (eventPhase === 2) { this._dispatchEvent(eventObj, 2.1); }
 	};
 
 
-createjs.EventDispatcher = EventDispatcher;
+	createjs.EventDispatcher = EventDispatcher;
 }());

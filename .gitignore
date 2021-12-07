@@ -15,3 +15,8 @@ docs/**/
 # (for cross OS compatibility)
 #-----------------------------
 *[\<\>\:\"\/\\\|\?\*]*
+**/.sass-cache/
+main.css
+*.codekit
+tests/.grunt
+_SpecRunner.html

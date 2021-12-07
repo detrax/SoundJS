@@ -87,13 +87,13 @@
 
     <p>
         Next, create an inline script that does the actual work of playing the sound. In general, it is a better
-        practice to create an external JavaScript file and load it in the html. This gives the benefit of separating 
-        code into more maintainable chunks and allows browsers to cache the files for quicker loads if users revisit 
+        practice to create an external JavaScript file and load it in the html. This gives the benefit of separating
+        code into more maintainable chunks and allows browsers to cache the files for quicker loads if users revisit
         your site or visit different areas in your site that use the same script. However, for our purposes, it is easier
         to demonstrate how to play sound inline in the HTML file.</p>
 
-    <p>Inside this script, create an <code>init</code> function, which will be called by adding an onload handler to the 
-        &lt;BODY&gt; tag. The <code>onload</code> callback will execute the <code>init</code> function when everything 
+    <p>Inside this script, create an <code>init</code> function, which will be called by adding an onload handler to the
+        &lt;BODY&gt; tag. The <code>onload</code> callback will execute the <code>init</code> function when everything
         on the page has loaded. The body tag should look similar to the following:
     </p>
     <textarea class="brush: js;" readonly>
@@ -121,7 +121,7 @@
     </p>
     <p>
         Plugin selection will happen automatically the first time audio is preloaded or played, however if you need to
-        determine if audio will play <em>before</em>, that (to show a message for example), a handy method exists to
+        determine if audio will play <em>before</em> that (to show a message for example), a handy method exists to
         manually initialize the default plugins: <a href="http://www.createjs.com/Docs/SoundJS/classes/Sound.html#method_initializeDefaultPlugins" target="_blank">
         <code>initializeDefaultPlugins()</code></a> can be called at any time.
     </p>
@@ -155,26 +155,26 @@
     </p>
     <textarea class="brush: js;" readonly>
         var audioPath = "assets/";
-        var manifest = [
-        	{id:"Music", src:"18-machinae_supremacy-lord_krutors_dominion.ogg},
+        var sounds = [
+        	{id:"Music", src:"M-GameBG.ogg"},
         	{id:"Thunder", src:"Thunder1.ogg"}
         ];
 		createjs.Sound.alternateExtensions = ["mp3"];
     </textarea>
 
     <p>
-        With our audio comfortably defined in a manifest, let's move on to loading the audio. SoundJS uses an
+        With our audio comfortably defined in a, let's move on to loading the audio. SoundJS uses an
         Event model, so we can add an event listener for the <a href="http://www.createjs.com/Docs/SoundJS/classes/Sound.html#event_fileload" target="_blank">
         <code>fileload</code> event</a>. It is a best practice to add this <em>before</em> we begin loading the audio to avoid a race
         condition where audio can load from cache immediately. The second parameter of the listener is the function to
-        call back. Once this is ready, the audio load can be kicked off using the <a href="http://www.createjs.com/Docs/SoundJS/classes/Sound.html#method_registerManifest" target="_blank">
-        <code>registerManifest</code> method</a>. Our deceptively simple and clean code should look like this:
+        call back. Once this is ready, the audio load can be kicked off using the <a href="http://www.createjs.com/Docs/SoundJS/classes/Sound.html#method_registerSounds" target="_blank">
+        <code>registerSounds</code> method</a>. Our deceptively simple and clean code should look like this:
     </p>
     <textarea class="brush: js;" readonly>
         function init() {
-        	// create a manifest and audioPath (above)
+        	// create an array and audioPath (above)
         	createjs.Sound.addEventListener("fileload", handleLoad);
-        	createjs.Sound.registerManifest(manifest, audioPath);
+        	createjs.Sound.registerSounds(sounds, audioPath);
         }
 
         function handleLoad(event) {
@@ -213,14 +213,14 @@
 			if (!createjs.Sound.initializeDefaultPlugins()) {return;}
 
 			var audioPath = "assets/";
-			var manifest = [
+			var sounds = [
 				{id:"Music", src:"18-machinae_supremacy-lord_krutors_dominion.ogg"},
 				{id:"Thunder", src:"Thunder1.ogg"}
 			];
 
 			createjs.Sound.alternateExtensions = ["mp3"];
 			createjs.Sound.addEventListener("fileload", handleLoad);
-			createjs.Sound.registerManifest(manifest, audioPath);
+			createjs.Sound.registerSounds(sounds, audioPath);
         }
 
         function handleLoad(event) {
@@ -257,7 +257,7 @@
     </header>
     <ol>
         <li>Download CreateJS from the <a href="http://code.createjs.com" target="_blank">Adobe CDN</a>.</li>
-        <li>Get the latest SoundJS source code, including minified versions of SoundJS and FlashPlugin from <a
+        <li>Get the latest SoundJS source code, including minified versions of SoundJS and FlashAudioPlugin from <a
                 href="http://github.com/CreateJS/SoundJS/" target="_blank">GitHub</a>.
         </li>
         <li>Read more about SoundJS in the <a href="http://createjs.com/Docs/SoundJS" target="_blank">online

@@ -8,10 +8,11 @@ module.exports = function (grunt) {
 
 				// Default values
 				version: 'NEXT',
+				fileVersion: '-<%= version %>',
 				name: 'soundjs',
 
 				// Setup doc names / paths.
-				docsName: '<%= pkg.name %>_docs-<%= version %>',
+				docsName: '<%= pkg.name %>_docs<%= fileVersion %>',
 				docsZip: "<%= docsName %>.zip",
 
 				// Setup Uglify for JS minification.
@@ -24,26 +25,61 @@ module.exports = function (grunt) {
 								"DEBUG": false
 							}
 						},
+						mangle: {
+							except: getExclusions()
+						}
 					},
 					build: {
 						files: {
-							'output/<%= pkg.name.toLowerCase() %>-<%= version %>.min.js': getConfigValue('source'),
-							'output/flashplugin-<%= version %>.min.js': getConfigValue('flashplugin_source'),
+							'output/<%= pkg.name.toLowerCase() %><%= fileVersion %>.min.js': getConfigValue('source'),
+							'output/flashaudioplugin<%= fileVersion %>.min.js': getConfigValue('flashaudioplugin_source'),
+							'output/cordovaaudioplugin<%= fileVersion %>.min.js': getConfigValue('cordovaaudioplugin_source'),
 						}
 					}
 				},
 
 				concat: {
 					options: {
-						separator: ''
+						separator: '',
+						process: function(src, filepath) {
+							// Remove a few things from each file, they will be added back at the end.
+
+							// Strip the license header.
+							var file = src.replace(/^(\/\*\s)[\s\S]+?\*\//, "")
+
+							// Strip namespace
+							// file = file.replace(/(this.createjs)\s=\s\1.*/, "");
+
+							// Strip namespace label
+							file = file.replace(/\/\/\s*namespace:/, "");
+
+							// Strip @module
+							file = file.replace(/\/\*\*[\s\S]+?@module[\s\S]+?\*\//, "");
+
+							// Clean up white space
+							file = file.replace(/^\s*/, "");
+							file = file.replace(/\s*$/, "");
+
+							// Append on the class name
+							file =
+								"\n\n//##############################################################################\n"+
+								"// " + path.basename(filepath) + "\n" +
+								"//##############################################################################\n\n"+
+							  	file;
+
+							return file;
+						}
 					},
 					build: {
 						files: {
-							'output/<%= pkg.name.toLowerCase() %>-<%= version %>.combined.js': combineSource([
+							'output/<%= pkg.name.toLowerCase() %><%= fileVersion %>.js': combineSource([
 										{cwd: '', config:'config.json', source:'source'}
 									]),
-							'output/flashplugin-<%= version %>.combined.js': combineSource([
-																	{cwd: '', config:'config.json', source:'flashplugin_source'}
+							'output/flashaudioplugin<%= fileVersion %>.js': combineSource([
+																	{cwd: '', config:'config.json', source:'flashaudioplugin_source'}
+																]),
+							'output/cordovaaudioplugin<%= fileVersion %>.js': combineSource([
+																	{cwd: '', config:'config.json', source:'cordovaaudioplugin_source'}
 																])
 						}
 					}
@@ -58,7 +94,7 @@ module.exports = function (grunt) {
 						url: '<%= pkg.url %>',
 						logo: '<%= pkg.logo %>',
 						options: {
-							paths: ['./'],
+							paths: ['./createjs', './soundjs'],
 							outdir: '<%= docsFolder %>',
 							linkNatives: true,
 							attributesEmit: true,
@@ -81,10 +117,16 @@ module.exports = function (grunt) {
 					}
 				},
 
+				clean: {
+				  docs: {
+				    src: ["<%= docsFolder %>/assets/scss"]
+				  }
+				},
+
 				copy: {
 					docsZip: {
 						files: [
-							{expand:true, cwd:'output/', src:'<%= docsZip %>', dest:'../docs/'}
+							{expand: true, cwd:'output/', src:'<%= docsZip %>', dest:'../docs/'}
 						]
 					},
 					docsSite: {
@@ -94,16 +136,59 @@ module.exports = function (grunt) {
 					},
 					src: {
 						files: [
-							{expand: true, cwd:'./output/', src: '*<%=version %>*.js', dest: '../lib/'}
+							{expand: true, cwd:'./output/', src: '*<%=fileVersion %>*.js', dest: '../lib/'}
 						]
 					}
 				},
 
 				updateversion: {
-					build: {
+					sound: {
 						file: '../src/soundjs/version.js',
 						version: '<%= version %>'
 					},
+					flashaudioplugin: {
+						file: '../src/soundjs/version_flashplugin.js',
+						version: '<%= version %>'
+					},
+					cordovaaudioplugin: {
+						file: '../src/soundjs/version_cordovaplugin.js',
+						version: '<%= version %>'
+					}
+				},
+
+				clearversion: {
+					sound: {
+						file: '../src/soundjs/version.js'
+					},
+					flashaudioplugin: {
+						file: '../src/soundjs/version_flashplugin.js'
+					},
+					cordovaaudioplugin: {
+						file: '../src/soundjs/version_cordovaplugin.js'
+					}
+				},
+
+				mxmlc: {
+					options: {
+						"rawConfig": '--source-path=../dev'
+					},
+					sound: {
+						files: {
+							'../src/soundjs/flashaudio/FlashAudioPlugin.swf': ['../dev/com/createjs/soundjs/FlashAudioPlugin.as']
+						}
+					}
+				},
+
+				sass: {
+					docs: {
+						options: {
+							style: 'compressed',
+							sourcemap:"none"
+						},
+						files: {
+							'createjsTheme/assets/css/main.css': 'createjsTheme/assets/scss/main.scss'
+						}
+					}
 				}
 			}
 	);
@@ -130,6 +215,14 @@ module.exports = function (grunt) {
 		}
 
 		return config[name];
+	}
+
+	function getCombinedSource() {
+		var configs = [
+			{cwd: '', config:'config.json', source:'source'}
+		];
+
+		return combineSource(configs);
 	}
 
 	function combineSource(configs) {
@@ -160,13 +253,46 @@ module.exports = function (grunt) {
 		return clean;
 	}
 
+	function getExclusions() {
+		var list = getConfigValue("source").concat(getConfigValue("flashaudioplugin_source")).concat(getConfigValue("cordovaaudioplugin_source"));
+		var files = [];
+		for (var i= 0, l=list.length; i<l; i++) {
+			var name = path.basename(list[i], '.js');
+			var letter = name.substr(0,1); // Check for Uppercase (Class), since methods are fine.
+			if (letter.toUpperCase() == letter) { files.push(name); }
+		}
+		return files;
+	}
+
+	function getBuildArgs() {
+		var banner = grunt.file.read("BANNER");
+		grunt.config("concat.options.banner", banner);
+	}
+
 	// Load all the tasks we need
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-yuidoc');
 	grunt.loadNpmTasks('grunt-contrib-compress');
 	grunt.loadNpmTasks('grunt-contrib-copy');
+	grunt.loadNpmTasks('grunt-mxmlc');
+	grunt.loadNpmTasks('grunt-contrib-sass');
+	grunt.loadNpmTasks('grunt-contrib-clean');
 	grunt.loadTasks('tasks/');
+
+	grunt.registerTask('exportScriptTags', function() {
+		var source = grunt.option("path") || "";
+
+		var config = getBuildConfig();
+		var scripts = config.source;
+		var tags = [];
+		for (var i = 0; i < scripts.length; i++) {
+			var script = '<script src="<%=src %>"></script>';
+			var realPath = scripts[i].replace("../src/", "");
+			tags.push(grunt.template.process(script, {data: {src: source + realPath}}));
+		}
+		console.log(tags.join("\n"));
+	});
 
 	grunt.registerTask('setDocsBase', "Internal utility task to set a correct base for YUIDocs.", function() {
 		grunt.file.setBase('../src');
@@ -182,37 +308,60 @@ module.exports = function (grunt) {
 	 * Build the docs using YUIdocs.
 	 */
 	grunt.registerTask('docs', [
-		"setDocsBase", "yuidoc", "resetBase", "compress", "copy:docsZip"
+		"sass", "setDocsBase", "yuidoc", "resetBase", "clean:docs", "compress", "copy:docsZip"
 	]);
+
 	/**
 	 * Sets out version to the version in package.json (defaults to NEXT)
 	 */
 	grunt.registerTask('setVersion', function () {
 		grunt.config.set('version', grunt.config.get('pkg').version);
+		grunt.config.set('fileVersion', '');
 	});
 
 	/**
 	 * Task for exporting a next build.
 	 *
 	 */
-	grunt.registerTask('next', [
-		"coreBuild"
+	grunt.registerTask('next', function() {
+		grunt.config("buildArgs", this.args || []);
+
+		getBuildArgs();
+		grunt.task.run(["coreBuild", "clearBuildArgs"]);
+	});
+
+	/**
+	 * Task for exporting only the next lib.
+	 *
+	 */
+	grunt.registerTask('nextlib', [
+		"updateversion", "combine", "uglify", "clearversion", "copy:src"
 	]);
+
+	/** Aliased task for WebStorm quick-run */
+	grunt.registerTask('_next_sound', ["next"]);
 
 	/**
 	 * Task for exporting a release build (version based on package.json)
 	 *
 	 */
-	grunt.registerTask('build', [
-		"setVersion", "coreBuild", "updatebower", "copy:docsSite"
-	]);
+	grunt.registerTask('build', function() {
+		grunt.config("buildArgs", this.args || []);
+
+		getBuildArgs();
+		grunt.task.run(["setVersion", "coreBuild", "updatebower", "copy:docsSite", "clearBuildArgs"]);
+	});
+
+	grunt.registerTask('clearBuildArgs', function() {
+		grunt.config("buildArgs", []);
+	});
 
 	/**
 	 * Main build task, always runs after next or build.
 	 *
 	 */
 	grunt.registerTask('coreBuild', [
-		"updateversion", "combine", "uglify", "docs", "copy:src"
+		"updateversion", "combine", "uglify", "clearversion", "docs", "copy:src"
 	]);
 
 	/**
@@ -222,4 +371,13 @@ module.exports = function (grunt) {
 	grunt.registerTask('combine', 'Combine all source into a single, un-minified file.', [
 		"concat"
 	]);
+
+	/**
+	 * Task for building the FlashAudioPlugin
+	 *
+	 */
+	grunt.registerTask('flash', 'Compile the FlashAudioPlugin.', [
+		"mxmlc"
+	]);
+
 };
